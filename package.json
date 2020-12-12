@@ -1,0 +1,29 @@
+{
+  "name": "flixplore-api",
+  "version": "0.1.0",
+  "description": "API server for Flixplore",
+  "engines": {
+    "node": "12.x"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "ejs": "^2.5.6",
+    "express": "^4.15.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prasanna-rkumar/flixplore-api"
+  },
+  "keywords": [
+    "node",
+    "flixplore",
+    "express",
+    "app_platform"
+  ],
+  "license": "MIT"
+}
