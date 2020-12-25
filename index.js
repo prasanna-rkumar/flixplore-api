@@ -7,8 +7,6 @@ const app = express();
 const dotenv = require('dotenv');
 dotenv.config();
 const TMDB_API_KEY = process.env.TMDB_API_KEY
-const RAPID_API_KEY = process.env.TMDB_API_KEY
-const RAPID_API_HOST = process.env.RAPID_API_HOST
 
 app
   .use(cors())
@@ -64,32 +62,25 @@ function discoverMovies(language, year, genre, page) {
   });
 }
 
-function getMovieWatchLocations(movieID) {
-  const options = {
-    "method": "GET",
-    "hostname": RAPID_API_HOST,
-    "port": null,
-    "path": `/idlookup?source_id=${movieID}&source=tmdb&country=us`,
-    "headers": {
-      "x-rapidapi-key": RAPID_API_KEY,
-      "x-rapidapi-host": RAPID_API_HOST,
-      "useQueryString": true
-    }
-  };
-
+function getMovieDetails(movieID) {
   return new Promise((resolve, reject) => {
-    const req = http.request(options, function (res) {
-      const chunks = [];
-
-      res.on("data", function (chunk) {
-        chunks.push(chunk);
+    const destURL = `https://api.themoviedb.org/3/movie/${movieID}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=credits%2Crelease_dates%2Cexternal_ids%2Cwatch%2Fproviders`;
+    http.get(destURL, (msg) => {
+      var resp = ""
+      msg.on("data", (chunk) => {
+        resp += chunk.toString()
       });
-
-      res.on("end", function () {
+      msg.on("end", () => {
         try {
-          const body = Buffer.concat(chunks);
-          const json = JSON.parse(body.toString())
-          resolve(json)
+          const movieDetails = JSON.parse(resp);
+          if(movieDetails.hasOwnProperty("success") && !movieDetails.success) {
+            reject({
+              status: 404, 
+              msg: "Resource not found"
+            })
+          } else {
+            resolve(movieDetails);
+          }
         } catch (e) {
           console.log(e)
           reject({
@@ -97,10 +88,15 @@ function getMovieWatchLocations(movieID) {
             msg: "Something went wrong. Please try again",
           });
         }
+      })
+      msg.on("error", (err) => {
+        reject({
+          status: 500,
+          msg: "Something went wrong. Please try again",
+        });
       });
     });
-    req.end();
-  })
+  });
 }
 
 app.get("/random/list", (req, res) => {
@@ -126,8 +122,8 @@ app.get("/random/list", (req, res) => {
     })
 })
 
-app.get('/watch-locations', (req, res) => {
-  getMovieWatchLocations(req.query.movieID).then(movieData => {
+app.get('/movie/details', (req, res) => {
+  getMovieDetails(req.query.movieID).then(movieData => {
     res.send({
       status: 200,
       data: movieData
